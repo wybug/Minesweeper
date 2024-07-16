@@ -75,10 +75,6 @@ pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
 
 tts.say('欢迎加入扫雷世界')
 
-image_rect = img_bg.get_rect()
-screen.blit(img_bg, image_rect)
-pygame.display.flip()
-
 
 def isVictory(all_blocks):
     open_flag_counter = 0
@@ -89,7 +85,50 @@ def isVictory(all_blocks):
         return True
 
 
-class block:
+class Missile(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.images = []
+        image = pygame.image.load('images/missile.png')
+        for angle in range(0, 360):
+            self.images.append(pygame.transform.rotate(image, angle))
+
+        self.angle = 0
+        self.image = self.images[0]  # self.angle % 360
+        self.rect = self.image.get_rect()
+
+    def update(self):
+        x1, y1 = self.rect.center
+        x2, y2 = pygame.mouse.get_pos()
+
+        # 图像正常位置时90度
+        angle_degrees = (math.atan2(y2 - y1, x2 - x1) * 180 / math.pi)
+
+        # 顺时针转换
+        if angle_degrees < 0:
+            angle_degrees = math.fabs(angle_degrees)
+        elif angle_degrees > 0:
+            angle_degrees = 360 - angle_degrees
+
+        self.rotate(angle_degrees - 90)
+        if x1 != x2 or y1 != y2:
+            # 计算角度和运动
+            if x2 > x1:
+                x1 += 1
+            else:
+                x1 -= 1
+            if y2 > y1:
+                y1 += 1
+            else:
+                y1 -= 1
+            self.rect.center = (x1, y1)
+
+    def rotate(self, angle):
+        self.angle = int(angle)
+        self.image = self.images[self.angle % 360]
+        self.rect = self.image.get_rect()
+
+class Block:
     x = 0
     y = 0
     position = []  # 9x9位置, 例如：0,1,1
@@ -146,7 +185,7 @@ block_position_x = 1
 block_position_y = 1
 
 for i in range(1, 82):
-    temp = block()
+    temp = Block()
     temp.x = screen_offset_x + block_offset_x
     temp.y = screen_offset_y + block_offset_y
     print(f'{i} - {temp.x},{temp.y}')
@@ -454,6 +493,9 @@ class VoiceButton(Button):
 buttonReset = ResetButton(screen, (screen_width - 100) / 2 - 60, 100, 100, 30, "重置", button_color=(255, 100, 0))
 buttonVoice = VoiceButton(screen, (screen_width - 100) / 2 + 60, 100, 100, 30, "Voice:Off", button_color=(255, 100, 0))
 
+missile_group = pygame.sprite.Group()
+missile_group.add(Missile())
+
 while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -472,6 +514,9 @@ while running:
             # 获取鼠标点击的位置
             mouse_pos = pygame.mouse.get_pos()
             handle_mouse_up_click(mouse_pos, event.button)
+
+    image_rect = img_bg.get_rect()
+    screen.blit(img_bg, image_rect)
 
     for temp in blocks:
         image_rect = img_list[11].get_rect()
@@ -532,6 +577,10 @@ while running:
     buttonReset.draw()
     buttonVoice.draw()
     game_state.draw()
+    missile_group.update()
+    missile_group.draw(screen)
+
+    # 绘图
     pygame.display.flip()
 
     clock.tick(60)  # limits FPS to 60
