@@ -86,22 +86,57 @@ def isVictory(all_blocks):
 
 
 class Missile(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
+    def __init__(self,*groups):
+        super().__init__(*groups)
+        self.target = None
         self.images = []
         image = pygame.image.load('images/missile.png')
         for angle in range(0, 360):
             self.images.append(pygame.transform.rotate(image, angle))
 
-        self.angle = 0
+        # 图片资源生成的角度
+        #      0(360)
+        # 90        270
+        #     180
+        self.angle = random.randint(0, 360)
         self.image = self.images[0]  # self.angle % 360
         self.rect = self.image.get_rect()
-        self.speed_x = 0
-        self.speed_y = 0
+        self.rect.center = (screen_width/2, screen_height/2)
 
-    def update(self):
+    def calc(self):
+        """
+        计算dx和dy距离
+        屏幕坐标系是反的，计算角度定义如下：
+                    -90
+        -180/+180               0
+                    90
+        """
+        calc_angle = 0
+        if 0 <= self.angle <= 90:
+            calc_angle = -90 - self.angle
+        elif 90 <= self.angle <= 180:
+            calc_angle = 180 - (self.angle-90)
+        elif 180 <= self.angle <= 270:
+            calc_angle = 90 - (self.angle-180)
+        else:
+            # 0 -> 90
+            calc_angle = - (self.angle-270)
+
+        # 计算移动
+        angle_rad = calc_angle * (3.14 / 180)
+        move_x = int(round(5 * math.cos(angle_rad)))
+        move_y = int(round(5 * math.sin(angle_rad)))
+
+        return move_x, move_y
+
+    def moveTo(self, x, y):
+        """
+        设定目标
+        """
+        self.target = (x, y)
+
         x1, y1 = self.rect.center
-        x2, y2 = pygame.mouse.get_pos()
+        x2, y2 = self.target
 
         # 图像正常位置时90度
         angle_degrees = (math.atan2(y2 - y1, x2 - x1) * 180 / math.pi)
@@ -112,20 +147,12 @@ class Missile(pygame.sprite.Sprite):
         elif angle_degrees > 0:
             angle_degrees = 360 - angle_degrees
 
-        # 导弹的方向
-        self.rotate(angle_degrees - 90)
+        self.rotate((angle_degrees - 90) % 360)
 
-        if x1 != x2 or y1 != y2:
-            # 计算角度和运动
-            if x2 > x1:
-                x1 += 2
-            else:
-                x1 -= 2
-            if y2 > y1:
-                y1 += 2
-            else:
-                y1 -= 2
-            self.rect.center = (x1, y1)
+    def update(self):
+        x1, y1 = self.rect.center
+        dx, dy = self.calc()
+        self.rect.center = (x1+dx, y1+dy)
 
     def rotate(self, angle):
         self.angle = int(angle)
@@ -387,13 +414,15 @@ class GameState:
 # 定义游戏
 game_state = GameState(screen, blocks, (screen_width - 250) / 2, 50, 250, 30)
 
+missile_group = pygame.sprite.Group()
+missile_item = Missile(missile_group)
 
 # 鼠标点击事件的处理函数
 def handle_mouse_down_click(pos, button):
     print(f'#down 鼠标点击在位置: {pos}')
     for temp in blocks:
         temp.mouse_down_event(pos, button)
-
+    missile_item.moveTo(pos[0], pos[1])
 
 def open_around_block(select_block, all_blocks):
     if select_block.open_flag:
@@ -496,9 +525,6 @@ class VoiceButton(Button):
 # 创建一个按钮实例
 buttonReset = ResetButton(screen, (screen_width - 100) / 2 - 60, 100, 100, 30, "重置", button_color=(255, 100, 0))
 buttonVoice = VoiceButton(screen, (screen_width - 100) / 2 + 60, 100, 100, 30, "Voice:Off", button_color=(255, 100, 0))
-
-missile_group = pygame.sprite.Group()
-missile_group.add(Missile())
 
 while running:
     # poll for events
