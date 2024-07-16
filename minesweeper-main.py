@@ -96,6 +96,8 @@ class Missile(pygame.sprite.Sprite):
         self.angle = 0
         self.image = self.images[0]  # self.angle % 360
         self.rect = self.image.get_rect()
+        self.speed_x = 0
+        self.speed_y = 0
 
     def update(self):
         x1, y1 = self.rect.center
@@ -110,17 +112,19 @@ class Missile(pygame.sprite.Sprite):
         elif angle_degrees > 0:
             angle_degrees = 360 - angle_degrees
 
+        # 导弹的方向
         self.rotate(angle_degrees - 90)
+
         if x1 != x2 or y1 != y2:
             # 计算角度和运动
             if x2 > x1:
-                x1 += 1
+                x1 += 2
             else:
-                x1 -= 1
+                x1 -= 2
             if y2 > y1:
-                y1 += 1
+                y1 += 2
             else:
-                y1 -= 1
+                y1 -= 2
             self.rect.center = (x1, y1)
 
     def rotate(self, angle):

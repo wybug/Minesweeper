@@ -136,27 +136,34 @@ def play_mp3_file(file, channel=0):
 
 
 def download_tts_file(text, filepath):
-    token = fetch_token()
-    tex = quote_plus(text)  # 此处TEXT需要两次urlencode
-    print(tex)
-    params = {'tok': token, 'tex': tex, 'per': PER, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': AUE, 'cuid': CUID,
-              'lan': 'zh', 'ctp': 1}  # lan ctp 固定参数
-
-    data = urlencode(params)
-    print('test on Web Browser' + TTS_URL + '?' + data)
-
-    req = Request(TTS_URL, data.encode('utf-8'))
     has_error = False
+
     try:
+        token = fetch_token()
+
+        tex = quote_plus(text)  # 此处TEXT需要两次urlencode
+        print(tex)
+        params = {'tok': token, 'tex': tex, 'per': PER, 'spd': SPD, 'pit': PIT, 'vol': VOL, 'aue': AUE, 'cuid': CUID,
+                  'lan': 'zh', 'ctp': 1}  # lan ctp 固定参数
+
+        data = urlencode(params)
+        print('test on Web Browser' + TTS_URL + '?' + data)
+
+        req = Request(TTS_URL, data.encode('utf-8'))
+
         f = urlopen(req)
         result_str = f.read()
 
         headers = dict((name.lower(), value) for name, value in f.headers.items())
 
         has_error = ('content-type' not in headers.keys() or headers['content-type'].find('audio/') < 0)
-    except  URLError as err:
+    except URLError as err:
         print('asr http response http code : ' + str(err.code))
         result_str = err.read()
+        has_error = True
+    except DemoError as err:
+        print('except DemoError : ' + str(err))
+        result_str = str(err).encode()
         has_error = True
 
     save_file = "error.txt" if has_error else filepath

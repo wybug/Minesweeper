@@ -6,6 +6,7 @@ This project is minesweeper game by pygame.
 2024/7/12 先自己采用pygame框架写一个demo，看看是否能做出来。  
 2024/7/14 实现一个简单的demo，代码非常乱，没有封装，没有封层。  
 2024/7/15 增加配置问及剥离百度API密钥，防止泄漏，增加一个默认配置，密钥为错误密钥，代码实际优先读安全配置config.json，安全配置文件通过gitignore文件过滤。  
+2024/7/16 增加导弹素材和动画测试，修正tts密钥异常缺失异常问题。
 
 # 参考
 [pygame doc](http://www.pygame.org/docs/)
