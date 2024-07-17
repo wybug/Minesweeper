@@ -129,12 +129,10 @@ class Missile(pygame.sprite.Sprite):
 
         return move_x, move_y
 
-    def moveTo(self, x, y):
+    def updateDirectAngle(self):
         """
-        设定目标
+        动画方向更新为目的地角度
         """
-        self.target = (x, y)
-
         x1, y1 = self.rect.center
         x2, y2 = self.target
 
@@ -148,16 +146,75 @@ class Missile(pygame.sprite.Sprite):
             angle_degrees = 360 - angle_degrees
 
         self.rotate((angle_degrees - 90) % 360)
+        pass
+
+    def updateStepAngle(self, step=3):
+        """
+        逐步更新到目的地角度
+        """
+        x1, y1 = self.rect.center
+        x2, y2 = self.target
+
+        # 图像正常位置时90度
+        angle_degrees = (math.atan2(y2 - y1, x2 - x1) * 180 / math.pi)
+
+        # 顺时针转换
+        if angle_degrees < 0:
+            angle_degrees = math.fabs(angle_degrees)
+        elif angle_degrees > 0:
+            angle_degrees = 360 - angle_degrees
+
+        # 通过目标角度，按照step修正运动angle
+        target_angle = ((angle_degrees - 90) % 360)
+
+        if math.fabs(target_angle - self.angle) < 180:
+            if target_angle > self.angle:
+                self.angle += step
+            else:
+                self.angle -= step
+        elif math.fabs(target_angle - self.angle) == 180:
+            # 随机方向，防止在同一侧打转
+            if random.randint(0, 1) == 0:
+                self.angle += step
+            else:
+                self.angle -= step
+        else:
+            if target_angle > self.angle:
+                self.angle -= step
+            else:
+                self.angle += step
+        self.rotate(self.angle)
+
+    def moveTo(self, x, y):
+        """
+        设定目标
+        """
+        self.target = (x, y)
+
+    def distance(self, x1,y1,x2,y2):
+        return math.sqrt(math.pow(x2-x1, 2) + math.pow(y2-y1, 2))
 
     def update(self):
+        if self.target is None:
+            return
+        self.updateStepAngle(step=3)
         x1, y1 = self.rect.center
         dx, dy = self.calc()
         self.rect.center = (x1+dx, y1+dy)
 
+        # 判断距离
+        x1, y1 = self.rect.center
+        x2,y2 = self.target
+        if self.distance(x1,y1,x2,y2) < 3:
+            self.target = None
+
     def rotate(self, angle):
-        self.angle = int(angle)
-        self.image = self.images[self.angle % 360]
+        self.angle = int(angle) % 360
+        self.image = self.images[self.angle]
+        # 保留中心点位置
+        center = self.rect.center
         self.rect = self.image.get_rect()
+        self.rect.center = center
 
 class Block:
     x = 0
