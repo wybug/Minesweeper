@@ -205,7 +205,7 @@ class Missile(pygame.sprite.Sprite):
         # 判断距离
         x1, y1 = self.rect.center
         x2,y2 = self.target
-        if self.distance(x1,y1,x2,y2) < 3:
+        if self.distance(x1, y1, x2, y2) < 3:
             self.target = None
 
     def rotate(self, angle):
