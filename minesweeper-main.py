@@ -27,9 +27,10 @@ images_path = [
     "images/tile_mine.gif",
     "images/tile_plain.gif",
     "images/tile_wrong.gif",
+    "images/shadow.png"
 ]
 
-img_bg = pygame.image.load("images/background.jpg")
+img_bg = pygame.image.load("images/background.png")
 
 img_list = []
 
@@ -86,9 +87,11 @@ def isVictory(all_blocks):
 
 
 class Missile(pygame.sprite.Sprite):
-    def __init__(self,*groups):
+    def __init__(self, *groups):
         super().__init__(*groups)
         self.target = None
+        self.buff = pygame.image.load('images/buff3.png')
+        self.buff_cnt = 0
         self.images = []
         image = pygame.image.load('images/missile.png')
         for angle in range(0, 360):
@@ -101,7 +104,7 @@ class Missile(pygame.sprite.Sprite):
         self.angle = random.randint(0, 360)
         self.image = self.images[0]  # self.angle % 360
         self.rect = self.image.get_rect()
-        self.rect.center = (screen_width/2, screen_height/2)
+        self.rect.center = (screen_width / 2, screen_height / 2)
 
     def calc(self):
         """
@@ -115,12 +118,12 @@ class Missile(pygame.sprite.Sprite):
         if 0 <= self.angle <= 90:
             calc_angle = -90 - self.angle
         elif 90 <= self.angle <= 180:
-            calc_angle = 180 - (self.angle-90)
+            calc_angle = 180 - (self.angle - 90)
         elif 180 <= self.angle <= 270:
-            calc_angle = 90 - (self.angle-180)
+            calc_angle = 90 - (self.angle - 180)
         else:
             # 0 -> 90
-            calc_angle = - (self.angle-270)
+            calc_angle = - (self.angle - 270)
 
         # 计算移动
         angle_rad = calc_angle * (3.14 / 180)
@@ -191,22 +194,27 @@ class Missile(pygame.sprite.Sprite):
         """
         self.target = (x, y)
 
-    def distance(self, x1,y1,x2,y2):
-        return math.sqrt(math.pow(x2-x1, 2) + math.pow(y2-y1, 2))
+    def distance(self, x1, y1, x2, y2):
+        return math.sqrt(math.pow(x2 - x1, 2) + math.pow(y2 - y1, 2))
 
     def update(self):
+        if self.buff_cnt > 0:
+            self.buff_cnt -= 1
+            return
         if self.target is None:
             return
         self.updateStepAngle(step=3)
         x1, y1 = self.rect.center
         dx, dy = self.calc()
-        self.rect.center = (x1+dx, y1+dy)
+        self.rect.center = (x1 + dx, y1 + dy)
 
         # 判断距离
         x1, y1 = self.rect.center
-        x2,y2 = self.target
+        x2, y2 = self.target
         if self.distance(x1, y1, x2, y2) < 3:
             self.target = None
+            self.buff_cnt = 10
+            self.image = self.buff
 
     def rotate(self, angle):
         self.angle = int(angle) % 360
@@ -215,6 +223,7 @@ class Missile(pygame.sprite.Sprite):
         center = self.rect.center
         self.rect = self.image.get_rect()
         self.rect.center = center
+
 
 class Block:
     x = 0
@@ -474,12 +483,14 @@ game_state = GameState(screen, blocks, (screen_width - 250) / 2, 50, 250, 30)
 missile_group = pygame.sprite.Group()
 missile_item = Missile(missile_group)
 
+
 # 鼠标点击事件的处理函数
 def handle_mouse_down_click(pos, button):
     print(f'#down 鼠标点击在位置: {pos}')
     for temp in blocks:
         temp.mouse_down_event(pos, button)
     missile_item.moveTo(pos[0], pos[1])
+
 
 def open_around_block(select_block, all_blocks):
     if select_block.open_flag:
@@ -659,6 +670,13 @@ while running:
             image_rect.right = image_rect.left + image_rect.width
             image_rect.bottom = image_rect.top + image_rect.height
             screen.blit(img_list[8], image_rect)
+
+        # image_rect = img_list[13].get_rect()
+        # image_rect.left = temp.x
+        # image_rect.top = temp.y
+        # image_rect.right = image_rect.left + image_rect.width
+        # image_rect.bottom = image_rect.top + image_rect.height
+        # screen.blit(img_list[13], image_rect)
 
     # 重置按钮
     buttonReset.draw()
