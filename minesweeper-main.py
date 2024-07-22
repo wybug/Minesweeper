@@ -77,10 +77,10 @@ pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
 tts.say('欢迎加入扫雷世界')
 
 
-def isVictory(all_blocks):
+def is_victory(all_blocks):
     open_flag_counter = 0
-    for temp in all_blocks:
-        if temp.open_flag:
+    for item in all_blocks:
+        if item.open_flag:
             open_flag_counter += 1
     if open_flag_counter == 9 * 9 - 10:
         return True
@@ -114,7 +114,6 @@ class Missile(pygame.sprite.Sprite):
         -180/+180               0
                     90
         """
-        calc_angle = 0
         if 0 <= self.angle <= 90:
             calc_angle = -90 - self.angle
         elif 90 <= self.angle <= 180:
@@ -132,7 +131,7 @@ class Missile(pygame.sprite.Sprite):
 
         return move_x, move_y
 
-    def updateDirectAngle(self):
+    def update_direct_angle(self):
         """
         动画方向更新为目的地角度
         """
@@ -151,7 +150,7 @@ class Missile(pygame.sprite.Sprite):
         self.rotate((angle_degrees - 90) % 360)
         pass
 
-    def updateStepAngle(self, step=3):
+    def update_step_angle(self, step: object = 3):
         """
         逐步更新到目的地角度
         """
@@ -188,22 +187,23 @@ class Missile(pygame.sprite.Sprite):
                 self.angle += step
         self.rotate(self.angle)
 
-    def moveTo(self, x, y):
+    def move_to(self, x, y):
         """
         设定目标
         """
         self.target = (x, y)
 
-    def distance(self, x1, y1, x2, y2):
+    @staticmethod
+    def distance(x1, y1, x2, y2):
         return math.sqrt(math.pow(x2 - x1, 2) + math.pow(y2 - y1, 2))
 
-    def update(self):
+    def update(self) -> None:
         if self.buff_cnt > 0:
             self.buff_cnt -= 1
             return
         if self.target is None:
             return
-        self.updateStepAngle(step=3)
+        self.update_step_angle(step=3)
         x1, y1 = self.rect.center
         dx, dy = self.calc()
         self.rect.center = (x1 + dx, y1 + dy)
@@ -247,6 +247,9 @@ class Block:
         self.down_flag = False
 
     def mouse_down_event(self, pos, button):
+        # 处理左键和右键
+        if button != 1 and button != 3:
+            return
         if self.open_flag:
             return
         pos_x, pos_y = pos
@@ -270,7 +273,7 @@ class Block:
         self.down_flag = False
 
 
-# 块 9x9, 81数组
+# 块 9x9, 数组81
 blocks = []
 
 screen_offset_x = (screen_width - 9 * 20) / 2
@@ -306,8 +309,8 @@ def generate_unique_data(n, min_val=0, max_val=None):
 
 
 def reset_game(all_block):
-    for temp in all_block:
-        temp.clear()
+    for item in all_block:
+        item.clear()
 
     #  9x9 格子10个雷
     for n in generate_unique_data(10, max_val=81):
@@ -315,14 +318,14 @@ def reset_game(all_block):
         all_block[n].type = 1
 
     # 设置雷后，计算每个块周围的计数器
-    for temp in all_block:
-        if temp.type != 1:
-            ind, px, py = temp.position
+    for item in all_block:
+        if item.type != 1:
+            ind, px, py = item.position
             # 周围方块对应索引，-1为不可用
             # 1  2  3
             # 4  X  5
             # 6  7  8
-            inds = [
+            winds = [
                 (px - 1, py - 1),
                 (px, py - 1),
                 (px + 1, py - 1),
@@ -334,9 +337,9 @@ def reset_game(all_block):
             ]
 
             list_ind = []
-            temp.mine_counter = 0
+            item.mine_counter = 0
 
-            for pos_x, pos_y in inds:
+            for pos_x, pos_y in winds:
                 # 越界则索引为-1
                 if (pos_x - 1) < 0 or (pos_y - 1) < 0:
                     temp_ind = -1
@@ -350,7 +353,7 @@ def reset_game(all_block):
                 if temp_ind >= len(blocks):
                     continue
                 if blocks[temp_ind].type == 1:
-                    temp.mine_counter += 1
+                    item.mine_counter += 1
 
             str_arr = [str(num) for num in list_ind]
             print(f"{ind} : {px},{py} ---", ' '.join(str_arr))
@@ -360,8 +363,8 @@ reset_game(blocks)
 
 
 class Button:
-    def __init__(self, screen, x, y, width, height, text, button_color=(0, 255, 0), text_color=(255, 255, 255)):
-        self.screen = screen
+    def __init__(self, pygame_screen, x, y, width, height, text, button_color=(0, 255, 0), text_color=(255, 255, 255)):
+        self.screen = pygame_screen
         self.x = x
         self.y = y
         self.width = width
@@ -383,7 +386,7 @@ class Button:
         text_rect.center = ((self.x + (self.width / 2)), (self.y + (self.height / 2)))
         self.screen.blit(text_surf, text_rect)
 
-    def isOver(self, pos):
+    def is_over(self, pos):
         # 检查鼠标是否在按钮上
         pos_x, pos_y = pos
         x, y, w, h = self.rect
@@ -391,13 +394,13 @@ class Button:
             return True
         return False
 
-    def handleClicked(self):
+    def handle_clicked(self):
         pass
 
-    def handleEvent(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.isOver(pygame.mouse.get_pos()):
+    def handle_event(self, evt):
+        if evt.type == pygame.MOUSEBUTTONDOWN and evt.button == 1 and self.is_over(pygame.mouse.get_pos()):
             print('Button clicked!')  # 或者执行其他操作
-            self.handleClicked()
+            self.handle_clicked()
 
 
 class GameState:
@@ -412,8 +415,8 @@ class GameState:
     font = None
     text_color = None
 
-    def __init__(self, screen, all_blocks, x, y, width, height, text_color=(255, 255, 255)):
-        self.screen = screen
+    def __init__(self, pygame_screen, all_blocks, x, y, width, height, text_color=(255, 255, 255)):
+        self.screen = pygame_screen
         self.all_blocks = all_blocks
         self.x = x
         self.y = y
@@ -447,12 +450,12 @@ class GameState:
     def stop(self):
         self.startFlag = False
 
-    def isStop(self):
+    def is_stop(self):
         if self.startFlag:
             return False
         return True
 
-    def getState(self):
+    def get_state(self):
         second = 0
         if self.pauseFlag:
             second = math.floor(self.timeTotalTicks / 1000)
@@ -468,7 +471,7 @@ class GameState:
         # 绘制按钮
         pygame.draw.rect(self.screen, (0, 100, 100), self.rect)
 
-        second, counter = self.getState()
+        second, counter = self.get_state()
         text = f"Mine Flag: {counter}/10, Time: {second} S"
         # 绘制按钮上的文本
         text_surf = self.font.render(text, True, self.text_color)
@@ -487,9 +490,9 @@ missile_item = Missile(missile_group)
 # 鼠标点击事件的处理函数
 def handle_mouse_down_click(pos, button):
     print(f'#down 鼠标点击在位置: {pos}')
-    for temp in blocks:
-        temp.mouse_down_event(pos, button)
-    missile_item.moveTo(pos[0], pos[1])
+    for item in blocks:
+        item.mouse_down_event(pos, button)
+    missile_item.move_to(pos[0], pos[1])
 
 
 def open_around_block(select_block, all_blocks):
@@ -507,7 +510,7 @@ def open_around_block(select_block, all_blocks):
     # 1  2  3
     # 4  X  5
     # 6  7  8
-    inds = [
+    vectors = [
         (px - 1, py - 1),
         (px, py - 1),
         (px + 1, py - 1),
@@ -520,16 +523,15 @@ def open_around_block(select_block, all_blocks):
 
     list_ind = []
 
-    for pos_x, pos_y in inds:
-        temp_ind = -1
+    for pos_x, pos_y in vectors:
         # 越界则索引为-1
         if (pos_x - 1) < 0 or (pos_y - 1) < 0:
-            temp_ind = -1
+            temp_index = -1
         elif (pos_x - 1) > 8 or (pos_y - 1) > 8:
-            temp_ind = -1
+            temp_index = -1
         else:
-            temp_ind = (pos_y - 1) * 9 + (pos_x - 1)
-        list_ind.append(temp_ind)
+            temp_index = (pos_y - 1) * 9 + (pos_x - 1)
+        list_ind.append(temp_index)
 
     if select_block.mine_counter == 0:
         select_block.open_flag = True
@@ -544,34 +546,34 @@ def open_around_block(select_block, all_blocks):
 
 def handle_mouse_up_click(pos, button):
     print(f'#up 鼠标点击在位置: {pos}')
-    gameOver = False
-    for temp in blocks:
-        temp_open_flag = temp.open_flag
-        temp.mouse_up_event(pos, button)
-        if temp_open_flag != temp.open_flag:
-            if temp.type == 1:
+    game_is_over = False
+    for item in blocks:
+        temp_open_flag = item.open_flag
+        item.mouse_up_event(pos, button)
+        if temp_open_flag != item.open_flag:
+            if item.type == 1:
                 tts.say("游戏结束，大侠请重新来过")
                 # 播放爆炸声，带缓存。tts use default channel = 0
                 tts.play_mp3_file(f'mp3/detonation.mp3', channel=1)
-                gameOver = True
+                game_is_over = True
             # 空白处理
-            elif temp.type != 1 and temp.mine_counter == 0:
-                temp.open_flag = False
-                open_around_block(temp, blocks)
+            elif item.type != 1 and item.mine_counter == 0:
+                item.open_flag = False
+                open_around_block(item, blocks)
             # 游戏结束检测
-            if not gameOver and isVictory(blocks):
+            if not game_is_over and is_victory(blocks):
                 tts.say("游戏胜利，请继续挑战")
-                gameOver = True
-            if game_state.isStop():
+                game_is_over = True
+            if game_state.is_stop():
                 game_state.start()
-    if gameOver:
-        for temp in blocks:
-            temp.open_flag = True
+    if game_is_over:
+        for item in blocks:
+            item.open_flag = True
         game_state.pause()
 
 
 class ResetButton(Button):
-    def handleClicked(self):
+    def handle_clicked(self):
         game_state.reset()
         reset_game(blocks)
 
@@ -579,7 +581,7 @@ class ResetButton(Button):
 class VoiceButton(Button):
     voiceSwitch = True
 
-    def handleClicked(self):
+    def handle_clicked(self):
         if self.voiceSwitch:
             self.voiceSwitch = False
             pygame.mixer.music.pause()
@@ -604,10 +606,10 @@ while running:
             # 获取鼠标点击的位置
             mouse_pos = pygame.mouse.get_pos()
             handle_mouse_down_click(mouse_pos, event.button)
-            if buttonReset.isOver(event.pos):
-                buttonReset.handleEvent(event)
-            if buttonVoice.isOver(event.pos):
-                buttonVoice.handleEvent(event)
+            if buttonReset.is_over(event.pos):
+                buttonReset.handle_event(event)
+            if buttonVoice.is_over(event.pos):
+                buttonVoice.handle_event(event)
         elif event.type == pygame.MOUSEBUTTONUP:  # 检查是否点击了鼠标按钮
             # 获取鼠标点击的位置
             mouse_pos = pygame.mouse.get_pos()
