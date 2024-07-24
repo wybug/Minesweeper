@@ -1,6 +1,4 @@
 import random
-import time
-
 import tts
 import pygame
 import math
@@ -15,6 +13,23 @@ pygame.display.set_caption('扫雷世界')
 clock = pygame.time.Clock()
 running = True
 
+
+def load_audio_play_bg():
+    # 初始化mixer模块
+    pygame.mixer.init()
+
+    # 加载音乐文件
+    # 《疯狂动物城》的主题曲, try everything
+    pygame.mixer.music.load('mp3/bg.mp3')
+
+    # 设置音乐参数
+    pygame.mixer.music.set_volume(0.7)  # 设置音量为70%
+    pygame.mixer.music.set_endevent(pygame.constants.USEREVENT + 1)  # 设置用户事件来在音乐结束时触发
+
+    # 播放音乐
+    pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
+
+
 # 启动界面,单机鼠标键推出启动界面（或者点击开始按钮）
 img_start = pygame.image.load("images/start.png")
 image_rect = img_start.get_rect()
@@ -22,20 +37,7 @@ pygame.draw.rect(screen, (255, 255, 255), image_rect)
 screen.blit(img_start, image_rect)
 pygame.display.flip()
 
-# 初始化mixer模块
-pygame.mixer.init()
-
-# 加载音乐文件
-# 《疯狂动物城》的主题曲, try everything
-pygame.mixer.music.load('mp3/bg.mp3')
-
-# 设置音乐参数
-pygame.mixer.music.set_volume(0.7)  # 设置音量为70%
-pygame.mixer.music.set_endevent(pygame.constants.USEREVENT + 1)  # 设置用户事件来在音乐结束时触发
-
-# 播放音乐
-pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
-
+load_audio_play_bg()
 tts.say('欢迎加入扫雷世界')
 
 while running:
@@ -76,6 +78,7 @@ img_list = []
 for path in images_path:
     img_temp = pygame.image.load(path)
     img_list.append(img_temp)
+
 
 def is_victory(all_blocks):
     open_flag_counter = 0
