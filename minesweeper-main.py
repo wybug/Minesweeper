@@ -1,4 +1,6 @@
 import random
+import time
+
 import tts
 import pygame
 import math
@@ -9,6 +11,43 @@ screen_height = 720
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('扫雷世界')
+
+clock = pygame.time.Clock()
+running = True
+
+# 启动界面,单机鼠标键推出启动界面（或者点击开始按钮）
+img_start = pygame.image.load("images/start.png")
+image_rect = img_start.get_rect()
+pygame.draw.rect(screen, (255, 255, 255), image_rect)
+screen.blit(img_start, image_rect)
+pygame.display.flip()
+
+# 初始化mixer模块
+pygame.mixer.init()
+
+# 加载音乐文件
+# 《疯狂动物城》的主题曲, try everything
+pygame.mixer.music.load('mp3/bg.mp3')
+
+# 设置音乐参数
+pygame.mixer.music.set_volume(0.7)  # 设置音量为70%
+pygame.mixer.music.set_endevent(pygame.constants.USEREVENT + 1)  # 设置用户事件来在音乐结束时触发
+
+# 播放音乐
+pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
+
+tts.say('欢迎加入扫雷世界')
+
+while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            running = False
+    clock.tick(60)  # limits FPS to 60
+# end 启动界面
 
 clock = pygame.time.Clock()
 running = True
@@ -37,45 +76,6 @@ img_list = []
 for path in images_path:
     img_temp = pygame.image.load(path)
     img_list.append(img_temp)
-
-
-def get_bell(money):
-    if money == 2:
-        return 1
-    return 0
-
-
-def add(a, b):
-    return a + b
-
-
-def box(a, b):
-    return a * a - b * b
-
-
-print(f'get_bell 1 is :', get_bell(1))
-print(f'get_bell 2 is :', get_bell(2))
-print(f'1+1 is :', add(1, 1))
-print(f'1+2 is :', add(1, 2))
-print(f'1+3 is :', add(1, 3))
-print(f'a=2, b=1 is :', box(2, 1))
-
-# 初始化mixer模块
-pygame.mixer.init()
-
-# 加载音乐文件
-# 《疯狂动物城》的主题曲, try everything
-pygame.mixer.music.load('mp3/bg.mp3')
-
-# 设置音乐参数
-pygame.mixer.music.set_volume(0.7)  # 设置音量为70%
-pygame.mixer.music.set_endevent(pygame.constants.USEREVENT + 1)  # 设置用户事件来在音乐结束时触发
-
-# 播放音乐
-pygame.mixer.music.play(loops=-1)  # 设置音乐循环播放无限次
-
-tts.say('欢迎加入扫雷世界')
-
 
 def isVictory(all_blocks):
     open_flag_counter = 0
